@@ -1,0 +1,9 @@
+*.DS_*tore
+*.bmp
+*.swp
+*.log
+*.venv
+*.python-version
+*checkpoints*
+*pycache*
+*.egg-info
