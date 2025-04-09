@@ -2,6 +2,7 @@
 import numpy as np 
 import pandas as pd 
 import scipy.stats
+import tqdm
 
 # Load localization data
 lcz = pd.read_csv('../../data/sources/gene_localization_annotation.csv')
@@ -11,12 +12,14 @@ lcz['name'] = lcz['name'].str.lower()
 ann = pd.read_csv('../../data/sources/Belliveau2021_annotated_complexes.csv')
 ann.rename(columns={'gene_name':'name'}, inplace=True)
 ann['name'] = ann['name'].str.lower()
+ann['fg_per_monomer'] = ann['fg_per_cell'] / ann['tot_per_cell']
 ann = ann[['name', 'go_terms', 'cog_class', 'cog_category', 'cog_letter',
-            'gene_product', 'complex', 'complex_annotation', 'n_subunits']]
-
+            'gene_product', 'complex', 'complex_annotation', 'n_subunits',
+            'fg_per_monomer']]
+ann = ann.groupby(['name', 'go_terms', 'cog_class', 'cog_category', 'cog_letter',
+            'gene_product', 'complex', 'complex_annotation', 'n_subunits']).mean().reset_index()
 # Merge to create a mapper.
 mapper = pd.merge(ann, lcz, on='name', how='inner')
-mapper.drop_duplicates(inplace=True)
 
 #%% 
 # Load mass spectrometry data 
@@ -26,6 +29,7 @@ mass_spec = mass_spec[['strain', 'carbon_source', 'growth_rate_hr', 'replicate',
 
 # Merge with annotation
 merged = pd.merge(mass_spec, mapper, on='name', how='inner')
+merged.drop_duplicates(inplace=True)
 
 #%%
 # Load the total protein and size data to compute masses and densities
@@ -38,9 +42,9 @@ vol_fit = scipy.stats.linregress(size_data['growth_rate_hr'], np.log(size_data['
 sa_fit = scipy.stats.linregress(size_data['growth_rate_hr'], size_data['surface_area_um2'])
 
 # As a function of the growth rate, compute the quantities
-tot_prot = np.exp(prot_fit[1] + prot_fit[0] * merged['growth_rate_hr'])
-tot_vol = np.exp(vol_fit[1] + vol_fit[0] * merged['growth_rate_hr'])
-tot_sa = sa_fit[1] + sa_fit[0] * merged['growth_rate_hr']
+tot_prot = np.exp(prot_fit[1] + prot_fit[0] * merged['growth_rate_hr'].values)
+tot_vol = np.exp(vol_fit[1] + vol_fit[0] * merged['growth_rate_hr'].values)
+tot_sa = sa_fit[1] + sa_fit[0] * merged['growth_rate_hr'].values
 W_PERI = 0.025
 
 # Compute the compartment size
