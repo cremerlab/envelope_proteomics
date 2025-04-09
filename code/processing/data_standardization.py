@@ -22,7 +22,7 @@ mapper.drop_duplicates(inplace=True)
 # Load mass spectrometry data 
 mass_spec = pd.read_csv('../../data/sources/collated_literature_mass_spectrometry.csv')
 mass_spec.loc[mass_spec['source']=='This Study', 'source'] = 'Chure et al. 2025'
-mass_spec = mass_spec[['strain', 'carbon_source', 'growth_rate_hr', 'replicate', 'name', 'mass_frac']]
+mass_spec = mass_spec[['strain', 'carbon_source', 'growth_rate_hr', 'replicate', 'name', 'mass_frac', 'source']]
 
 # Merge with annotation
 merged = pd.merge(mass_spec, mapper, on='name', how='inner')
